@@ -17,6 +17,7 @@ package software.amazon.smithy.go.codegen.protocol.aws;
 
 import static software.amazon.smithy.go.codegen.GoWriter.goTemplate;
 import static software.amazon.smithy.go.codegen.SmithyGoDependency.SMITHY_HTTP_TRANSPORT;
+import static software.amazon.smithy.go.codegen.integration.ProtocolGenerator.getOperationErrorDeserFunctionName;
 import static software.amazon.smithy.go.codegen.protocol.ProtocolUtil.hasEventStream;
 import static software.amazon.smithy.go.codegen.server.protocol.JsonDeserializerGenerator.getDeserializerName;
 
@@ -125,14 +126,15 @@ public class DeserializeMiddleware {
                 }
 
                 if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-                    return out, metadata, &$deserError:T{}
+                    return out, metadata, $errorDeserialized:L(resp)
                 }
 
             """,
                 MapUtils.of(
                         "response", SMITHY_HTTP_TRANSPORT.pointableSymbol("Response"),
                         "errorf", GoStdlibTypes.Fmt.Errorf,
-                        "deserError", SmithyGoDependency.SMITHY.struct("DeserializationError")
+                        "errorDeserialized", getOperationErrorDeserFunctionName(operation, ctx.getService(),
+                                "awsJson10")
                 ));
     }
 
